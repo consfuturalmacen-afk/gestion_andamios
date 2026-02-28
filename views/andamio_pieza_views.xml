@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_andamio_pieza_tree" model="ir.ui.view">
+        <field name="name">andamio.pieza.tree</field>
+        <field name="model">andamio.pieza</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="codigo"/>
+                <field name="stock_total"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_andamio_pieza_form" model="ir.ui.view">
+        <field name="name">andamio.pieza.form</field>
+        <field name="model">andamio.pieza</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="codigo"/>
+                        <field name="stock_total"/>
+                        <field name="image_1920" widget="image"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_andamio_pieza" model="ir.actions.act_window">
+        <field name="name">Piezas</field>
+        <field name="res_model">andamio.pieza</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_andamio_root" name="Gestión Andamios"/>
+    <menuitem id="menu_andamio_piezas" name="Piezas" parent="menu_andamio_root" action="action_andamio_pieza"/>
+</odoo>

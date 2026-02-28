@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_andamio_movimiento_tree" model="ir.ui.view">
+        <field name="name">andamio.movimiento.tree</field>
+        <field name="model">andamio.movimiento</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="obra_id"/>
+                <field name="fecha_entrega"/>
+                <field name="estado"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_andamio_movimiento_form" model="ir.ui.view">
+        <field name="name">andamio.movimiento.form</field>
+        <field name="model">andamio.movimiento</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="obra_id"/>
+                        <field name="fecha_entrega"/>
+                        <field name="estado"/>
+                    </group>
+                    <notebook>
+                        <page string="Líneas">
+                            <field name="lineas_ids">
+                                <tree editable="bottom">
+                                    <field name="pieza_id"/>
+                                    <field name="cantidad"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_andamio_movimiento" model="ir.actions.act_window">
+        <field name="name">Movimientos</field>
+        <field name="res_model">andamio.movimiento</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_andamio_movimientos" name="Movimientos" parent="menu_andamio_root" action="action_andamio_movimiento"/>
+</odoo>

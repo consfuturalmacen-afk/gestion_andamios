@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_andamio_pieza_user,andamio.pieza user,model_andamio_pieza,base.group_user,1,1,1,1
+access_andamio_obra_user,andamio.obra user,model_andamio_obra,base.group_user,1,1,1,1
+access_andamio_movimiento_user,andamio.movimiento user,model_andamio_movimiento,base.group_user,1,1,1,1
+access_andamio_movimiento_linea_user,andamio.movimiento.linea user,model_andamio_movimiento_linea,base.group_user,1,1,1,1
