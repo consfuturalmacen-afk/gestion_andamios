@@ -40,7 +40,7 @@
                 <field name="cliente"/>
                 <field name="encargado_id"/>
                 <templates>
-                    <t t-name="kanban-box">
+                    <t t-name="card">
                         <div class="oe_kanban_global_click">
                             <strong><field name="name"/></strong>
                             <div><span>Ubicación: </span><field name="ubicacion"/></div>
