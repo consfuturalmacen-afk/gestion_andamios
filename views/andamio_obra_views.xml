@@ -4,12 +4,12 @@
         <field name="name">andamio.obra.tree</field>
         <field name="model">andamio.obra</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name"/>
                 <field name="ubicacion"/>
                 <field name="cliente"/>
                 <field name="encargado_id"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -56,7 +56,7 @@
     <record id="action_andamio_obra" model="ir.actions.act_window">
         <field name="name">Obras</field>
         <field name="res_model">andamio.obra</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
     </record>
 
     <menuitem id="menu_andamio_obras" name="Obras" parent="menu_andamio_root" action="action_andamio_obra"/>
