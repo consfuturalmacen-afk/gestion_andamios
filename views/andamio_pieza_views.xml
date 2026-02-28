@@ -35,6 +35,6 @@
         <field name="view_mode">list,form</field>
     </record>
 
-    <menuitem id="menu_andamio_root" name="Gestión Andamios"/>
+    <menuitem id="menu_andamio_root" name="Gestión Andamios" action="action_andamio_obra"/>
     <menuitem id="menu_andamio_piezas" name="Piezas" parent="menu_andamio_root" action="action_andamio_pieza"/>
 </odoo>
