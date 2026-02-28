@@ -6,7 +6,7 @@
         <field name="arch" type="xml">
             <list>
                 <field name="name"/>
-                <field name="ubicacion_id"/>
+                <field name="ubicacion"/>
                 <field name="cliente"/>
                 <field name="encargado_id"/>
             </list>
@@ -21,7 +21,7 @@
                 <sheet>
                     <group>
                         <field name="name"/>
-                        <field name="ubicacion_id" options="{'no_create_edit': True, 'no_open': False}"/>
+                        <field name="ubicacion_id" options="{'no_create_edit': True}"/>
                         <field name="cliente"/>
                         <field name="encargado_id"/>
                     </group>
@@ -36,14 +36,14 @@
         <field name="arch" type="xml">
             <kanban>
                 <field name="name"/>
-                <field name="ubicacion_id"/>
+                <field name="ubicacion"/>
                 <field name="cliente"/>
                 <field name="encargado_id"/>
                 <templates>
                     <t t-name="card">
                         <div class="oe_kanban_global_click">
                             <strong><field name="name"/></strong>
-                            <div><span>Ubicación: </span><field name="ubicacion_id"/></div>
+                            <div><span>Ubicación: </span><field name="ubicacion"/></div>
                             <div><span>Cliente: </span><field name="cliente"/></div>
                             <div><span>Encargado: </span><field name="encargado_id"/></div>
                         </div>

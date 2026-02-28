@@ -12,5 +12,12 @@ class AndamioObra(models.Model):
         domain=[("usage", "=", "internal")],
         required=True,
     )
+    # Campo legado para compatibilidad con datos previos y visualización en listas/kanban.
+    ubicacion = fields.Char(
+        string="Ubicación",
+        related="ubicacion_id.complete_name",
+        store=True,
+        readonly=True,
+    )
     cliente = fields.Char(string="Cliente")
     encargado_id = fields.Many2one("hr.employee", string="Encargado")
