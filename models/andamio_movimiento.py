@@ -183,7 +183,10 @@ class AndamioMovimiento(models.Model):
                         _("No se pudo reservar stock para %s. Estado actual: %s")
                         % (linea.pieza_id.display_name, move.state)
                     )
-                move._action_done()
+                if movimiento.tipo_movimiento in ("devolucion", "traslado"):
+                    move.with_context(allow_negative_stock=True)._action_done()
+                else:
+                    move._action_done()
 
                 if movimiento.tipo_movimiento == "salida":
                     movimiento._apply_obra_stock(movimiento.obra_id, linea.pieza_id, linea.cantidad)
