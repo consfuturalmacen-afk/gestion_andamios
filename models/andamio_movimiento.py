@@ -1,4 +1,4 @@
-from odoo import _, api, fields, models
+from odoo import _, fields, models
 from odoo.exceptions import UserError
 
 
@@ -6,7 +6,6 @@ class AndamioMovimiento(models.Model):
     _name = "andamio.movimiento"
     _description = "Movimiento de Andamios"
 
-    name = fields.Char(string="Referencia", default="Nuevo", copy=False, readonly=True)
     obra_id = fields.Many2one("andamio.obra", string="Obra", required=True)
     fecha_entrega = fields.Date(string="Fecha", required=True, default=fields.Date.context_today)
     tipo_movimiento = fields.Selection(
@@ -23,14 +22,6 @@ class AndamioMovimiento(models.Model):
         required=True,
     )
     stock_move_ids = fields.One2many("stock.move", "andamio_movimiento_id", string="Movimientos Stock")
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        records = super().create(vals_list)
-        for rec in records:
-            if rec.name in (False, "Nuevo", "/"):
-                rec.name = self.env["ir.sequence"].next_by_code("andamio.movimiento") or "Nuevo"
-        return records
 
     def action_confirmar(self):
         stock_location = self.env.ref("stock.stock_location_stock", raise_if_not_found=False)
@@ -62,7 +53,7 @@ class AndamioMovimiento(models.Model):
 
                 move = self.env["stock.move"].create(
                     {
-                        "name": f"{movimiento.name or '/'} - {linea.pieza_id.name}",
+                        "name": f"MOV-AND/{movimiento.id or 0} - {linea.pieza_id.name}",
                         "product_id": linea.pieza_id.product_id.id,
                         "product_uom_qty": linea.cantidad,
                         "product_uom": linea.pieza_id.product_id.uom_id.id,

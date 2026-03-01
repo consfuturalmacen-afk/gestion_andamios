@@ -33,7 +33,6 @@
                         <page string="Movimientos">
                             <field name="movimiento_ids" readonly="1">
                                 <list>
-                                    <field name="name"/>
                                     <field name="fecha_entrega"/>
                                     <field name="tipo_movimiento"/>
                                     <field name="estado"/>
