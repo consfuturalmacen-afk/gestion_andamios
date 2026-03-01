@@ -142,3 +142,30 @@ class TestMovimientosStock(TransactionCase):
         )
         self.assertEqual(stock_obra.cantidad, 0)
 
+
+
+    def test_traslado_repara_stock_fisico_desincronizado(self):
+        self.env["andamio.obra.stock"].create(
+            {"obra_id": self.obra.id, "pieza_id": self.pieza.id, "cantidad": 1}
+        )
+
+        traslado = self.env["andamio.movimiento"].create(
+            {
+                "obra_id": self.obra.id,
+                "obra_destino_id": self.obra_2.id,
+                "tipo_movimiento": "traslado",
+                "lineas_ids": [(0, 0, {"pieza_id": self.pieza.id, "cantidad": 1})],
+            }
+        )
+        traslado.action_confirmar()
+
+        stock_origen = self.env["andamio.obra.stock"].search(
+            [("obra_id", "=", self.obra.id), ("pieza_id", "=", self.pieza.id)],
+            limit=1,
+        )
+        stock_destino = self.env["andamio.obra.stock"].search(
+            [("obra_id", "=", self.obra_2.id), ("pieza_id", "=", self.pieza.id)],
+            limit=1,
+        )
+        self.assertEqual(stock_origen.cantidad, 0)
+        self.assertEqual(stock_destino.cantidad, 1)

@@ -169,15 +169,20 @@ class AndamioMovimiento(models.Model):
                     }
                 )
                 move._action_confirm()
+                if movimiento.tipo_movimiento in ("devolucion", "traslado"):
+                    movimiento._ensure_physical_stock(
+                        linea.pieza_id.product_id,
+                        location_id,
+                        linea.cantidad,
+                    )
                 move._action_assign()
-                if move.state != "assigned":
-                    if movimiento.tipo_movimiento in ("devolucion", "traslado"):
-                        move.quantity = linea.cantidad
-                    else:
-                        raise UserError(
-                            _("No se pudo reservar stock para %s. Estado actual: %s")
-                            % (linea.pieza_id.display_name, move.state)
-                        )
+                if movimiento.tipo_movimiento in ("devolucion", "traslado"):
+                    move.quantity = linea.cantidad
+                elif move.state != "assigned":
+                    raise UserError(
+                        _("No se pudo reservar stock para %s. Estado actual: %s")
+                        % (linea.pieza_id.display_name, move.state)
+                    )
                 move._action_done()
 
                 if movimiento.tipo_movimiento == "salida":
