@@ -32,6 +32,21 @@ class AndamioMovimiento(models.Model):
         field_name = "available_quantity" if use_available else "quantity"
         return sum(quants.mapped(field_name))
 
+    def _get_qty_en_obra_by_moves(self, product, obra_location):
+        moves_to_obra = self.env["stock.move"].search([
+            ("product_id", "=", product.id),
+            ("state", "=", "done"),
+            ("location_dest_id", "child_of", obra_location.id),
+        ])
+        moves_from_obra = self.env["stock.move"].search([
+            ("product_id", "=", product.id),
+            ("state", "=", "done"),
+            ("location_id", "child_of", obra_location.id),
+        ])
+        return sum(moves_to_obra.mapped("product_uom_qty")) - sum(
+            moves_from_obra.mapped("product_uom_qty")
+        )
+
     def write(self, vals):
         if "tipo_movimiento" in vals:
             bloqueados = self.filtered(lambda mov: mov.estado != "borrador")
@@ -72,12 +87,18 @@ class AndamioMovimiento(models.Model):
                         % linea.pieza_id.display_name
                     )
 
-                use_available = movimiento.tipo_movimiento == "salida"
-                disponible = movimiento._get_location_qty(
-                    linea.pieza_id.product_id,
-                    location_id,
-                    use_available=use_available,
-                )
+                if movimiento.tipo_movimiento == "salida":
+                    disponible = movimiento._get_location_qty(
+                        linea.pieza_id.product_id,
+                        location_id,
+                        use_available=True,
+                    )
+                else:
+                    disponible = movimiento._get_qty_en_obra_by_moves(
+                        linea.pieza_id.product_id,
+                        location_id,
+                    )
+
                 if disponible < linea.cantidad:
                     raise UserError(
                         _(
@@ -105,10 +126,13 @@ class AndamioMovimiento(models.Model):
                 move._action_confirm()
                 move._action_assign()
                 if move.state != "assigned":
-                    raise UserError(
-                        _("No se pudo reservar stock para %s. Estado actual: %s")
-                        % (linea.pieza_id.display_name, move.state)
-                    )
+                    if movimiento.tipo_movimiento == "devolucion":
+                        move.quantity = linea.cantidad
+                    else:
+                        raise UserError(
+                            _("No se pudo reservar stock para %s. Estado actual: %s")
+                            % (linea.pieza_id.display_name, move.state)
+                        )
                 move._action_done()
 
             movimiento.estado = nuevo_estado
