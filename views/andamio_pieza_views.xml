@@ -7,6 +7,7 @@
             <list>
                 <field name="name"/>
                 <field name="codigo"/>
+                <field name="product_id"/>
                 <field name="stock_total"/>
             </list>
         </field>
@@ -21,7 +22,8 @@
                     <group>
                         <field name="name"/>
                         <field name="codigo"/>
-                        <field name="stock_total"/>
+                        <field name="product_id"/>
+                        <field name="stock_total" readonly="1"/>
                         <field name="image_1920" widget="image"/>
                     </group>
                 </sheet>
@@ -47,7 +49,7 @@
                             <div class="oe_kanban_details">
                                 <strong><field name="name"/></strong>
                                 <div><span>Código: </span><field name="codigo"/></div>
-                                <div><span>Stock: </span><field name="stock_total"/></div>
+                                <div><span>Stock WH/Stock: </span><field name="stock_total"/></div>
                             </div>
                         </div>
                     </t>
@@ -62,6 +64,13 @@
         <field name="view_mode">kanban,list,form</field>
     </record>
 
+    <record id="action_andamio_informe_stock_wh" model="ir.actions.act_window">
+        <field name="name">Informe Stock WH/Stock</field>
+        <field name="res_model">andamio.pieza</field>
+        <field name="view_mode">list,kanban,form</field>
+    </record>
+
     <menuitem id="menu_andamio_root" name="Gestión Andamios" action="action_andamio_obra"/>
     <menuitem id="menu_andamio_piezas" name="Piezas" parent="menu_andamio_root" action="action_andamio_pieza"/>
+    <menuitem id="menu_andamio_informe_stock_wh" name="Informe Stock WH/Stock" parent="menu_andamio_root" action="action_andamio_informe_stock_wh" sequence="32"/>
 </odoo>
