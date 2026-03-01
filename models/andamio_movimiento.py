@@ -1,4 +1,4 @@
-from odoo import _, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
@@ -24,7 +24,7 @@ class AndamioMovimiento(models.Model):
     )
     stock_move_ids = fields.One2many("stock.move", "andamio_movimiento_id", string="Movimientos Stock")
 
-    @models.model_create_multi
+    @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
         for rec in records:
