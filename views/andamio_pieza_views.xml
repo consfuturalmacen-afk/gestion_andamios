@@ -24,7 +24,7 @@
                         <field name="codigo"/>
                         <field name="product_id"/>
                         <field name="stock_total" readonly="1"/>
-                        <field name="image_1920" widget="image"/>
+                        <field name="image_1920" widget="image" class="oe_avatar" options="{'size': [128, 128]}"/>
                     </group>
                 </sheet>
             </form>
@@ -44,7 +44,7 @@
                     <t t-name="card">
                         <div class="oe_kanban_global_click o_kanban_record_has_image_fill">
                             <div class="o_kanban_image">
-                                <field name="image_1920" widget="image"/>
+                                <field name="image_1920" widget="image" class="oe_avatar" options="{'size': [128, 128]}"/>
                             </div>
                             <div class="oe_kanban_details">
                                 <strong><field name="name"/></strong>
