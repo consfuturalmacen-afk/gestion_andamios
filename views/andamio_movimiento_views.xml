@@ -8,6 +8,7 @@
                 <field name="obra_id"/>
                 <field name="fecha_entrega"/>
                 <field name="tipo_movimiento"/>
+                <field name="obra_destino_id"/>
                 <field name="estado"/>
             </list>
         </field>
@@ -20,6 +21,7 @@
             <search>
                 <field name="obra_id"/>
                 <field name="tipo_movimiento"/>
+                <field name="obra_destino_id"/>
                 <field name="estado"/>
                 <filter string="Borrador" name="f_borrador" domain="[('estado', '=', 'borrador')]"/>
                 <filter string="En Obra" name="f_en_obra" domain="[('estado', '=', 'en_obra')]"/>
@@ -27,6 +29,7 @@
                 <separator/>
                 <filter string="Entregas" name="f_salidas" domain="[('tipo_movimiento', '=', 'salida')]"/>
                 <filter string="Devoluciones" name="f_devoluciones" domain="[('tipo_movimiento', '=', 'devolucion')]"/>
+                <filter string="Traslados" name="f_traslados" domain="[('tipo_movimiento', '=', 'traslado')]"/>
                 <group expand="0" string="Agrupar por">
                     <filter string="Obra" name="group_obra" context="{'group_by': 'obra_id'}"/>
                     <filter string="Estado" name="group_estado" context="{'group_by': 'estado'}"/>
@@ -49,6 +52,7 @@
                 <sheet>
                     <group>
                         <field name="obra_id"/>
+                        <field name="obra_destino_id" readonly="estado != 'borrador'" invisible="tipo_movimiento != 'traslado'"/>
                         <field name="fecha_entrega"/>
                         <field name="tipo_movimiento" readonly="estado != 'borrador'"/>
                     </group>

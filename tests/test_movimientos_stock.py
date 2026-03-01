@@ -59,3 +59,14 @@ class TestMovimientosStock(TransactionCase):
         mov.estado = "en_obra"
         with self.assertRaises(Exception):
             mov.write({"tipo_movimiento": "devolucion"})
+
+
+    def test_traslado_requiere_obra_destino(self):
+        with self.assertRaises(Exception):
+            self.env["andamio.movimiento"].create(
+                {
+                    "obra_id": self.obra.id,
+                    "tipo_movimiento": "traslado",
+                    "lineas_ids": [(0, 0, {"pieza_id": self.pieza.id, "cantidad": 1})],
+                }
+            )

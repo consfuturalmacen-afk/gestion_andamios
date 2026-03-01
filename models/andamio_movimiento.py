@@ -6,10 +6,19 @@ class AndamioMovimiento(models.Model):
     _name = "andamio.movimiento"
     _description = "Movimiento de Andamios"
 
-    obra_id = fields.Many2one("andamio.obra", string="Obra", required=True)
+    obra_id = fields.Many2one("andamio.obra", string="Obra Origen", required=True)
+    obra_destino_id = fields.Many2one(
+        "andamio.obra",
+        string="Obra Destino",
+        domain="[('id', '!=', obra_id)]",
+    )
     fecha_entrega = fields.Date(string="Fecha", required=True, default=fields.Date.context_today)
     tipo_movimiento = fields.Selection(
-        [("salida", "Salida a Obra"), ("devolucion", "Devolución a Almacén")],
+        [
+            ("salida", "Salida a Obra"),
+            ("devolucion", "Devolución a Almacén"),
+            ("traslado", "Traslado entre Obras"),
+        ],
         string="Tipo",
         required=True,
         default="salida",
@@ -23,22 +32,26 @@ class AndamioMovimiento(models.Model):
     )
     stock_move_ids = fields.One2many("stock.move", "andamio_movimiento_id", string="Movimientos Stock")
 
-
     def _get_location_qty(self, product, location, use_available=True):
-        quants = self.env["stock.quant"].search([
-            ("product_id", "=", product.id),
-            ("location_id", "child_of", location.id),
-        ])
+        quants = self.env["stock.quant"].search(
+            [("product_id", "=", product.id), ("location_id", "child_of", location.id)]
+        )
         field_name = "available_quantity" if use_available else "quantity"
         return sum(quants.mapped(field_name))
+
+    @api.constrains("tipo_movimiento", "obra_destino_id", "obra_id")
+    def _check_obra_destino_traslado(self):
+        for mov in self:
+            if mov.tipo_movimiento == "traslado" and not mov.obra_destino_id:
+                raise ValidationError(_("Debe indicar una Obra Destino para traslados."))
+            if mov.tipo_movimiento == "traslado" and mov.obra_destino_id == mov.obra_id:
+                raise ValidationError(_("La Obra Destino debe ser distinta a la Obra Origen."))
 
     def write(self, vals):
         if "tipo_movimiento" in vals:
             bloqueados = self.filtered(lambda mov: mov.estado != "borrador")
             if bloqueados:
-                raise UserError(
-                    _("No se puede cambiar el tipo de movimiento fuera de estado borrador.")
-                )
+                raise UserError(_("No se puede cambiar el tipo de movimiento fuera de estado borrador."))
         return super().write(vals)
 
     def action_confirmar(self):
@@ -52,44 +65,38 @@ class AndamioMovimiento(models.Model):
             if not movimiento.lineas_ids:
                 raise UserError(_("Debe agregar al menos una línea de piezas."))
             if not movimiento.obra_id.ubicacion_id:
-                raise UserError(_("La obra debe tener una ubicación interna configurada."))
+                raise UserError(_("La obra origen debe tener una ubicación interna configurada."))
 
             if movimiento.tipo_movimiento == "salida":
                 location_id = stock_location
                 location_dest_id = movimiento.obra_id.ubicacion_id
                 nuevo_estado = "en_obra"
-            else:
+                use_available = True
+            elif movimiento.tipo_movimiento == "devolucion":
                 location_id = movimiento.obra_id.ubicacion_id
                 location_dest_id = stock_location
                 nuevo_estado = "devuelto"
+                use_available = False
+            else:
+                if not movimiento.obra_destino_id or not movimiento.obra_destino_id.ubicacion_id:
+                    raise UserError(_("Debe indicar una obra destino con ubicación interna."))
+                location_id = movimiento.obra_id.ubicacion_id
+                location_dest_id = movimiento.obra_destino_id.ubicacion_id
+                nuevo_estado = "en_obra"
+                use_available = False
 
             for linea in movimiento.lineas_ids:
                 if linea.cantidad <= 0:
                     raise UserError(_("La cantidad debe ser mayor que cero."))
                 if not linea.pieza_id.product_id:
-                    raise UserError(
-                        _("La pieza %s no tiene producto de inventario.")
-                        % linea.pieza_id.display_name
-                    )
+                    raise UserError(_("La pieza %s no tiene producto de inventario.") % linea.pieza_id.display_name)
 
-                if movimiento.tipo_movimiento == "salida":
-                    disponible = movimiento._get_location_qty(
-                        linea.pieza_id.product_id,
-                        location_id,
-                        use_available=True,
-                    )
-                else:
-                    disponible = movimiento._get_location_qty(
-                        linea.pieza_id.product_id,
-                        location_id,
-                        use_available=False,
-                    )
-
+                disponible = movimiento._get_location_qty(
+                    linea.pieza_id.product_id, location_id, use_available=use_available
+                )
                 if disponible < linea.cantidad:
                     raise UserError(
-                        _(
-                            "Stock insuficiente para %s en %s. Disponible: %s, solicitado: %s"
-                        )
+                        _("Stock insuficiente para %s en %s. Disponible: %s, solicitado: %s")
                         % (
                             linea.pieza_id.display_name,
                             location_id.display_name,
@@ -112,7 +119,7 @@ class AndamioMovimiento(models.Model):
                 move._action_confirm()
                 move._action_assign()
                 if move.state != "assigned":
-                    if movimiento.tipo_movimiento == "devolucion":
+                    if movimiento.tipo_movimiento in ("devolucion", "traslado"):
                         move.quantity = linea.cantidad
                     else:
                         raise UserError(
@@ -132,9 +139,7 @@ class AndamioMovimientoLinea(models.Model):
     _name = "andamio.movimiento.linea"
     _description = "Línea de Movimiento de Andamios"
 
-    movimiento_id = fields.Many2one(
-        "andamio.movimiento", string="Movimiento", required=True, ondelete="cascade"
-    )
+    movimiento_id = fields.Many2one("andamio.movimiento", string="Movimiento", required=True, ondelete="cascade")
     pieza_id = fields.Many2one("andamio.pieza", string="Pieza", required=True)
     cantidad = fields.Float(string="Cantidad", required=True, default=1.0)
 
@@ -156,6 +161,4 @@ class AndamioMovimientoLinea(models.Model):
 class StockMove(models.Model):
     _inherit = "stock.move"
 
-    andamio_movimiento_id = fields.Many2one(
-        "andamio.movimiento", string="Movimiento Andamio", index=True
-    )
+    andamio_movimiento_id = fields.Many2one("andamio.movimiento", string="Movimiento Andamio", index=True)
