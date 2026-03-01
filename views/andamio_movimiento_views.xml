@@ -77,7 +77,6 @@
             <pivot>
                 <field name="obra_id" type="row"/>
                 <field name="tipo_movimiento" type="col"/>
-                <field name="id" type="measure" string="Nº Movimientos"/>
             </pivot>
         </field>
     </record>
