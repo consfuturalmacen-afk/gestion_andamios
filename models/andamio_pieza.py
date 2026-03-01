@@ -33,6 +33,6 @@ class AndamioPieza(models.Model):
                 continue
             quants = self.env["stock.quant"].search([
                 ("product_id", "=", pieza.product_id.id),
-                ("location_id", "child_of", stock_location.id),
+                ("location_id", "=", stock_location.id),
             ])
             pieza.stock_total = sum(quants.mapped("available_quantity"))
