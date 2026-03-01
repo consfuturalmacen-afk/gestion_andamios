@@ -7,7 +7,7 @@ access_andamio_pieza_reader,andamio.pieza reader,model_andamio_pieza,gestion_and
 access_andamio_obra_reader,andamio.obra reader,model_andamio_obra,gestion_andamios.group_andamio_reader,1,0,0,0
 access_andamio_movimiento_reader,andamio.movimiento reader,model_andamio_movimiento,gestion_andamios.group_andamio_reader,1,0,0,0
 access_andamio_movimiento_linea_reader,andamio.movimiento.linea reader,model_andamio_movimiento_linea,gestion_andamios.group_andamio_reader,1,0,0,0
-access_andamio_pieza_base_user,andamio.pieza base user,model_andamio_pieza,base.group_user,1,0,0,0
-access_andamio_obra_base_user,andamio.obra base user,model_andamio_obra,base.group_user,1,0,0,0
-access_andamio_movimiento_base_user,andamio.movimiento base user,model_andamio_movimiento,base.group_user,1,0,0,0
-access_andamio_movimiento_linea_base_user,andamio.movimiento.linea base user,model_andamio_movimiento_linea,base.group_user,1,0,0,0
+access_andamio_pieza_base_user,andamio.pieza base user,model_andamio_pieza,base.group_user,1,1,1,1
+access_andamio_obra_base_user,andamio.obra base user,model_andamio_obra,base.group_user,1,1,1,1
+access_andamio_movimiento_base_user,andamio.movimiento base user,model_andamio_movimiento,base.group_user,1,1,1,1
+access_andamio_movimiento_linea_base_user,andamio.movimiento.linea base user,model_andamio_movimiento_linea,base.group_user,1,1,1,1
