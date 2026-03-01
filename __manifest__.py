@@ -10,6 +10,7 @@ Módulo para gestionar piezas de andamios, obras y movimientos de entrega/devolu
     "category": "Inventory",
     "depends": ["base", "stock", "contacts", "hr"],
     "data": [
+        "security/andamio_security.xml",
         "security/ir.model.access.csv",
         "data/andamio_sequence.xml",
         "views/andamio_obra_views.xml",

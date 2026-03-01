@@ -1,5 +1,5 @@
-from odoo import _, fields, models
-from odoo.exceptions import UserError
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError, UserError
 
 
 class AndamioMovimiento(models.Model):
@@ -22,6 +22,15 @@ class AndamioMovimiento(models.Model):
         required=True,
     )
     stock_move_ids = fields.One2many("stock.move", "andamio_movimiento_id", string="Movimientos Stock")
+
+    def write(self, vals):
+        if "tipo_movimiento" in vals:
+            bloqueados = self.filtered(lambda mov: mov.estado != "borrador")
+            if bloqueados:
+                raise UserError(
+                    _("No se puede cambiar el tipo de movimiento fuera de estado borrador.")
+                )
+        return super().write(vals)
 
     def action_confirmar(self):
         stock_location = self.env.ref("stock.stock_location_stock", raise_if_not_found=False)
@@ -49,7 +58,10 @@ class AndamioMovimiento(models.Model):
                 if linea.cantidad <= 0:
                     raise UserError(_("La cantidad debe ser mayor que cero."))
                 if not linea.pieza_id.product_id:
-                    raise UserError(_("La pieza %s no tiene producto de inventario.") % linea.pieza_id.display_name)
+                    raise UserError(
+                        _("La pieza %s no tiene producto de inventario.")
+                        % linea.pieza_id.display_name
+                    )
 
                 move = self.env["stock.move"].create(
                     {
@@ -84,8 +96,24 @@ class AndamioMovimientoLinea(models.Model):
     pieza_id = fields.Many2one("andamio.pieza", string="Pieza", required=True)
     cantidad = fields.Float(string="Cantidad", required=True, default=1.0)
 
+    _sql_constraints = [
+        (
+            "andamio_movimiento_linea_unique_pieza",
+            "unique(movimiento_id, pieza_id)",
+            "No puede repetir la misma pieza en un movimiento.",
+        ),
+    ]
+
+    @api.constrains("cantidad")
+    def _check_cantidad_positiva(self):
+        for linea in self:
+            if linea.cantidad <= 0:
+                raise ValidationError(_("La cantidad en líneas debe ser mayor que cero."))
+
 
 class StockMove(models.Model):
     _inherit = "stock.move"
 
-    andamio_movimiento_id = fields.Many2one("andamio.movimiento", string="Movimiento Andamio", index=True)
+    andamio_movimiento_id = fields.Many2one(
+        "andamio.movimiento", string="Movimiento Andamio", index=True
+    )

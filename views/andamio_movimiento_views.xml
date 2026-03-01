@@ -21,6 +21,12 @@
                 <field name="obra_id"/>
                 <field name="tipo_movimiento"/>
                 <field name="estado"/>
+                <filter string="Borrador" name="f_borrador" domain="[('estado', '=', 'borrador')]"/>
+                <filter string="En Obra" name="f_en_obra" domain="[('estado', '=', 'en_obra')]"/>
+                <filter string="Devuelto" name="f_devuelto" domain="[('estado', '=', 'devuelto')]"/>
+                <separator/>
+                <filter string="Entregas" name="f_salidas" domain="[('tipo_movimiento', '=', 'salida')]"/>
+                <filter string="Devoluciones" name="f_devoluciones" domain="[('tipo_movimiento', '=', 'devolucion')]"/>
                 <group expand="0" string="Agrupar por">
                     <filter string="Obra" name="group_obra" context="{'group_by': 'obra_id'}"/>
                     <filter string="Estado" name="group_estado" context="{'group_by': 'estado'}"/>

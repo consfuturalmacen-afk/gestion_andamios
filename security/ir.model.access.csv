@@ -1,5 +1,9 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_andamio_pieza_user,andamio.pieza user,model_andamio_pieza,base.group_user,1,1,1,1
-access_andamio_obra_user,andamio.obra user,model_andamio_obra,base.group_user,1,1,1,1
-access_andamio_movimiento_user,andamio.movimiento user,model_andamio_movimiento,base.group_user,1,1,1,1
-access_andamio_movimiento_linea_user,andamio.movimiento.linea user,model_andamio_movimiento_linea,base.group_user,1,1,1,1
+access_andamio_pieza_operator,andamio.pieza operator,model_andamio_pieza,gestion_andamios.group_andamio_operator,1,1,1,1
+access_andamio_obra_operator,andamio.obra operator,model_andamio_obra,gestion_andamios.group_andamio_operator,1,1,1,1
+access_andamio_movimiento_operator,andamio.movimiento operator,model_andamio_movimiento,gestion_andamios.group_andamio_operator,1,1,1,1
+access_andamio_movimiento_linea_operator,andamio.movimiento.linea operator,model_andamio_movimiento_linea,gestion_andamios.group_andamio_operator,1,1,1,1
+access_andamio_pieza_reader,andamio.pieza reader,model_andamio_pieza,gestion_andamios.group_andamio_reader,1,0,0,0
+access_andamio_obra_reader,andamio.obra reader,model_andamio_obra,gestion_andamios.group_andamio_reader,1,0,0,0
+access_andamio_movimiento_reader,andamio.movimiento reader,model_andamio_movimiento,gestion_andamios.group_andamio_reader,1,0,0,0
+access_andamio_movimiento_linea_reader,andamio.movimiento.linea reader,model_andamio_movimiento_linea,gestion_andamios.group_andamio_reader,1,0,0,0
