@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_andamio_movimiento_list" model="ir.ui.view">
+        <field name="name">andamio.movimiento.list</field>
+        <field name="model">andamio.movimiento</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="obra_id"/>
+                <field name="fecha_entrega"/>
+                <field name="tipo_movimiento"/>
+                <field name="obra_destino_id"/>
+                <field name="estado"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_andamio_movimiento_search" model="ir.ui.view">
+        <field name="name">andamio.movimiento.search</field>
+        <field name="model">andamio.movimiento</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="obra_id"/>
+                <field name="tipo_movimiento"/>
+                <field name="obra_destino_id"/>
+                <field name="estado"/>
+                <filter string="Borrador" name="f_borrador" domain="[('estado', '=', 'borrador')]"/>
+                <filter string="En Obra" name="f_en_obra" domain="[('estado', '=', 'en_obra')]"/>
+                <filter string="Devuelto" name="f_devuelto" domain="[('estado', '=', 'devuelto')]"/>
+                <separator/>
+                <filter string="Entregas" name="f_salidas" domain="[('tipo_movimiento', '=', 'salida')]"/>
+                <filter string="Devoluciones" name="f_devoluciones" domain="[('tipo_movimiento', '=', 'devolucion')]"/>
+                <filter string="Traslados" name="f_traslados" domain="[('tipo_movimiento', '=', 'traslado')]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Obra" name="group_obra" context="{'group_by': 'obra_id'}"/>
+                    <filter string="Estado" name="group_estado" context="{'group_by': 'estado'}"/>
+                    <filter string="Tipo" name="group_tipo" context="{'group_by': 'tipo_movimiento'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_andamio_movimiento_form" model="ir.ui.view">
+        <field name="name">andamio.movimiento.form</field>
+        <field name="model">andamio.movimiento</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_confirmar" string="Confirmar" type="object" class="btn-primary" invisible="estado != 'borrador'"/>
+                    <button name="action_borrador" string="Volver a borrador" type="object" invisible="estado == 'borrador'"/>
+                    <field name="estado" widget="statusbar" statusbar_visible="borrador,en_obra,devuelto"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="obra_id"/>
+                        <field name="obra_destino_id" readonly="estado != 'borrador'" invisible="tipo_movimiento != 'traslado'"/>
+                        <field name="fecha_entrega"/>
+                        <field name="tipo_movimiento" readonly="estado != 'borrador'"/>
+                    </group>
+                    <notebook>
+                        <page string="Líneas">
+                            <field name="lineas_ids" readonly="estado != 'borrador'">
+                                <list editable="bottom">
+                                    <field name="pieza_id"/>
+                                    <field name="cantidad"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Stock">
+                            <field name="stock_move_ids" readonly="1">
+                                <list>
+                                                        <field name="product_id"/>
+                                    <field name="product_uom_qty"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_andamio_movimiento_pivot" model="ir.ui.view">
+        <field name="name">andamio.movimiento.pivot</field>
+        <field name="model">andamio.movimiento</field>
+        <field name="arch" type="xml">
+            <pivot>
+                <field name="obra_id" type="row"/>
+                <field name="tipo_movimiento" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_andamio_movimiento" model="ir.actions.act_window">
+        <field name="name">Movimientos</field>
+        <field name="res_model">andamio.movimiento</field>
+        <field name="view_mode">list,form,pivot</field>
+        <field name="search_view_id" ref="view_andamio_movimiento_search"/>
+    </record>
+
+    <record id="action_andamio_informe_movimientos_por_obra" model="ir.actions.act_window">
+        <field name="name">Informe Movimientos por Obra</field>
+        <field name="res_model">andamio.movimiento</field>
+        <field name="view_mode">pivot,list</field>
+        <field name="context">{'search_default_group_obra': 1}</field>
+    </record>
+
+    <menuitem id="menu_andamio_movimientos" name="Movimientos" parent="menu_andamio_root" action="action_andamio_movimiento"/>
+    <menuitem id="menu_andamio_informe_movimientos" name="Informe Movimientos por Obra" parent="menu_andamio_root" action="action_andamio_informe_movimientos_por_obra" sequence="30"/>
+</odoo>
