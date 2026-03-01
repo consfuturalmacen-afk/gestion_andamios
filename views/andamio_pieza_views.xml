@@ -5,9 +5,9 @@
         <field name="model">andamio.pieza</field>
         <field name="arch" type="xml">
             <list>
-                <field name="name"/>
-                <field name="codigo"/>
                 <field name="product_id"/>
+                <field name="codigo"/>
+                <field name="name"/>
                 <field name="stock_total"/>
             </list>
         </field>
@@ -20,9 +20,9 @@
             <form>
                 <sheet>
                     <group>
-                        <field name="name"/>
-                        <field name="codigo"/>
-                        <field name="product_id"/>
+                        <field name="product_id" options="{'no_create_edit': True}"/>
+                        <field name="codigo" readonly="1"/>
+                        <field name="name" readonly="1"/>
                         <field name="stock_total" readonly="1"/>
                         <field name="image_1920" widget="image" class="oe_avatar" options="{'size': [128, 128]}"/>
                     </group>
@@ -36,6 +36,7 @@
         <field name="model">andamio.pieza</field>
         <field name="arch" type="xml">
             <kanban>
+                <field name="product_id"/>
                 <field name="name"/>
                 <field name="codigo"/>
                 <field name="stock_total"/>
@@ -48,6 +49,7 @@
                             </div>
                             <div class="oe_kanban_details">
                                 <strong><field name="name"/></strong>
+                                <div><span>Producto: </span><field name="product_id"/></div>
                                 <div><span>Código: </span><field name="codigo"/></div>
                                 <div><span>Stock WH/Stock: </span><field name="stock_total"/></div>
                             </div>

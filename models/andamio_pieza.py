@@ -5,14 +5,14 @@ class AndamioPieza(models.Model):
     _name = "andamio.pieza"
     _description = "Pieza de Andamio"
 
-    name = fields.Char(string="Nombre", required=True)
-    codigo = fields.Char(string="Código", required=True, copy=False)
     product_id = fields.Many2one(
         "product.product",
         string="Producto de Inventario",
         required=True,
         domain=[("type", "=", "product")],
     )
+    name = fields.Char(string="Nombre", related="product_id.display_name", store=True, readonly=True)
+    codigo = fields.Char(string="Código", related="product_id.default_code", store=True, readonly=True)
     image_1920 = fields.Image(string="Imagen")
     stock_total = fields.Float(
         string="Stock en WH/Stock",
@@ -21,7 +21,11 @@ class AndamioPieza(models.Model):
     )
 
     _sql_constraints = [
-        ("andamio_pieza_codigo_unique", "unique(codigo)", "El código debe ser único."),
+        (
+            "andamio_pieza_product_unique",
+            "unique(product_id)",
+            "Ya existe una pieza vinculada a este producto de inventario.",
+        ),
     ]
 
     @api.depends("product_id")

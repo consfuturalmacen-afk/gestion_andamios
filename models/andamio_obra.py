@@ -5,12 +5,17 @@ class AndamioObra(models.Model):
     _name = "andamio.obra"
     _description = "Obra"
 
-    name = fields.Char(string="Nombre de la Obra", required=True)
     ubicacion_id = fields.Many2one(
         "stock.location",
         string="Ubicación Interna",
         domain=[("usage", "=", "internal")],
         required=True,
+    )
+    name = fields.Char(
+        string="Obra",
+        related="ubicacion_id.complete_name",
+        store=True,
+        readonly=True,
     )
     ubicacion = fields.Char(
         string="Ubicación",
@@ -18,8 +23,8 @@ class AndamioObra(models.Model):
         store=True,
         readonly=True,
     )
-    cliente = fields.Char(string="Cliente")
-    encargado_id = fields.Many2one("hr.employee", string="Encargado")
+    encargado_id = fields.Many2one("res.partner", string="Cliente / Encargado")
+    cliente = fields.Char(string="Cliente", related="encargado_id.name", store=True, readonly=True)
     movimiento_ids = fields.One2many("andamio.movimiento", "obra_id", string="Movimientos")
     stock_por_pieza_ids = fields.One2many("andamio.obra.stock", "obra_id", string="Stock por Pieza")
     stock_move_ids = fields.Many2many(

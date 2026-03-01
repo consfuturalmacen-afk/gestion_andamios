@@ -13,7 +13,7 @@ class TestMovimientosStock(TransactionCase):
             }
         )
         self.obra = self.env["andamio.obra"].create(
-            {"name": "Obra Test", "ubicacion_id": self.ubicacion_obra.id}
+            {"ubicacion_id": self.ubicacion_obra.id}
         )
         self.ubicacion_obra_2 = self.env["stock.location"].create(
             {
@@ -23,18 +23,13 @@ class TestMovimientosStock(TransactionCase):
             }
         )
         self.obra_2 = self.env["andamio.obra"].create(
-            {"name": "Obra Test 2", "ubicacion_id": self.ubicacion_obra_2.id}
+            {"ubicacion_id": self.ubicacion_obra_2.id}
         )
         self.product = self.env["product.product"].create(
             {"name": "Producto Andamio Test", "type": "product"}
         )
-        self.pieza = self.env["andamio.pieza"].create(
-            {
-                "name": "Pieza Test",
-                "codigo": "PZ-TEST-001",
-                "product_id": self.product.id,
-            }
-        )
+        self.product.default_code = "PZ-TEST-001"
+        self.pieza = self.env["andamio.pieza"].create({"product_id": self.product.id})
         self.env["stock.quant"]._update_available_quantity(
             self.product,
             self.stock_location,
