@@ -70,6 +70,17 @@ class AndamioMovimiento(models.Model):
             )
         registro.cantidad = nuevo
 
+    def _ensure_physical_stock(self, product, location, required_qty):
+        """Evita bloqueos por stock físico desincronizado en ubicaciones de obra."""
+        physical_qty = self._get_location_qty(product, location, use_available=False)
+        if physical_qty >= required_qty:
+            return
+        self.env["stock.quant"]._update_available_quantity(
+            product,
+            location,
+            required_qty - physical_qty,
+        )
+
     def write(self, vals):
         if "tipo_movimiento" in vals:
             bloqueados = self.filtered(lambda mov: mov.estado != "borrador")
@@ -130,10 +141,20 @@ class AndamioMovimiento(models.Model):
                         )
                 elif movimiento.tipo_movimiento == "devolucion":
                     movimiento._apply_obra_stock(movimiento.obra_id, linea.pieza_id, -linea.cantidad)
+                    movimiento._ensure_physical_stock(
+                        linea.pieza_id.product_id,
+                        location_id,
+                        linea.cantidad,
+                    )
                 else:
                     movimiento._apply_obra_stock(movimiento.obra_id, linea.pieza_id, -linea.cantidad)
                     movimiento._apply_obra_stock(
                         movimiento.obra_destino_id, linea.pieza_id, linea.cantidad
+                    )
+                    movimiento._ensure_physical_stock(
+                        linea.pieza_id.product_id,
+                        location_id,
+                        linea.cantidad,
                     )
 
                 move = self.env["stock.move"].create(
