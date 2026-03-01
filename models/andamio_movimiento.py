@@ -23,6 +23,14 @@ class AndamioMovimiento(models.Model):
     )
     stock_move_ids = fields.One2many("stock.move", "andamio_movimiento_id", string="Movimientos Stock")
 
+
+    def _get_available_qty(self, product, location):
+        quants = self.env["stock.quant"].search([
+            ("product_id", "=", product.id),
+            ("location_id", "child_of", location.id),
+        ])
+        return sum(quants.mapped("available_quantity"))
+
     def write(self, vals):
         if "tipo_movimiento" in vals:
             bloqueados = self.filtered(lambda mov: mov.estado != "borrador")
@@ -63,6 +71,20 @@ class AndamioMovimiento(models.Model):
                         % linea.pieza_id.display_name
                     )
 
+                disponible = movimiento._get_available_qty(linea.pieza_id.product_id, location_id)
+                if disponible < linea.cantidad:
+                    raise UserError(
+                        _(
+                            "Stock insuficiente para %s en %s. Disponible: %s, solicitado: %s"
+                        )
+                        % (
+                            linea.pieza_id.display_name,
+                            location_id.display_name,
+                            disponible,
+                            linea.cantidad,
+                        )
+                    )
+
                 move = self.env["stock.move"].create(
                     {
                         "product_id": linea.pieza_id.product_id.id,
@@ -76,6 +98,11 @@ class AndamioMovimiento(models.Model):
                 )
                 move._action_confirm()
                 move._action_assign()
+                if move.state != "assigned":
+                    raise UserError(
+                        _("No se pudo reservar stock para %s. Estado actual: %s")
+                        % (linea.pieza_id.display_name, move.state)
+                    )
                 move._action_done()
 
             movimiento.estado = nuevo_estado
