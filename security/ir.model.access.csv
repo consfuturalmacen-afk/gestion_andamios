@@ -11,3 +11,6 @@ access_andamio_pieza_base_user,andamio.pieza base user,model_andamio_pieza,base.
 access_andamio_obra_base_user,andamio.obra base user,model_andamio_obra,base.group_user,1,1,1,1
 access_andamio_movimiento_base_user,andamio.movimiento base user,model_andamio_movimiento,base.group_user,1,1,1,1
 access_andamio_movimiento_linea_base_user,andamio.movimiento.linea base user,model_andamio_movimiento_linea,base.group_user,1,1,1,1
+access_andamio_obra_stock_operator,andamio.obra.stock operator,model_andamio_obra_stock,gestion_andamios.group_andamio_operator,1,1,1,1
+access_andamio_obra_stock_reader,andamio.obra.stock reader,model_andamio_obra_stock,gestion_andamios.group_andamio_reader,1,0,0,0
+access_andamio_obra_stock_base_user,andamio.obra.stock base user,model_andamio_obra_stock,base.group_user,1,1,1,1

@@ -47,6 +47,29 @@ class AndamioMovimiento(models.Model):
             if mov.tipo_movimiento == "traslado" and mov.obra_destino_id == mov.obra_id:
                 raise ValidationError(_("La Obra Destino debe ser distinta a la Obra Origen."))
 
+
+    def _apply_obra_stock(self, obra, pieza, delta):
+        stock_model = self.env["andamio.obra.stock"]
+        registro = stock_model.search(
+            [("obra_id", "=", obra.id), ("pieza_id", "=", pieza.id)], limit=1
+        )
+        if not registro:
+            if delta < 0:
+                raise UserError(
+                    _("No hay stock registrado de %s en la obra %s.")
+                    % (pieza.display_name, obra.display_name)
+                )
+            registro = stock_model.create(
+                {"obra_id": obra.id, "pieza_id": pieza.id, "cantidad": 0.0}
+            )
+        nuevo = registro.cantidad + delta
+        if nuevo < 0:
+            raise UserError(
+                _("Stock insuficiente para %s en %s. Disponible: %s, solicitado: %s")
+                % (pieza.display_name, obra.display_name, registro.cantidad, abs(delta))
+            )
+        registro.cantidad = nuevo
+
     def write(self, vals):
         if "tipo_movimiento" in vals:
             bloqueados = self.filtered(lambda mov: mov.estado != "borrador")
@@ -91,18 +114,26 @@ class AndamioMovimiento(models.Model):
                 if not linea.pieza_id.product_id:
                     raise UserError(_("La pieza %s no tiene producto de inventario.") % linea.pieza_id.display_name)
 
-                disponible = movimiento._get_location_qty(
-                    linea.pieza_id.product_id, location_id, use_available=use_available
-                )
-                if disponible < linea.cantidad:
-                    raise UserError(
-                        _("Stock insuficiente para %s en %s. Disponible: %s, solicitado: %s")
-                        % (
-                            linea.pieza_id.display_name,
-                            location_id.display_name,
-                            disponible,
-                            linea.cantidad,
+                if movimiento.tipo_movimiento == "salida":
+                    disponible = movimiento._get_location_qty(
+                        linea.pieza_id.product_id, location_id, use_available=use_available
+                    )
+                    if disponible < linea.cantidad:
+                        raise UserError(
+                            _("Stock insuficiente para %s en %s. Disponible: %s, solicitado: %s")
+                            % (
+                                linea.pieza_id.display_name,
+                                location_id.display_name,
+                                disponible,
+                                linea.cantidad,
+                            )
                         )
+                elif movimiento.tipo_movimiento == "devolucion":
+                    movimiento._apply_obra_stock(movimiento.obra_id, linea.pieza_id, -linea.cantidad)
+                else:
+                    movimiento._apply_obra_stock(movimiento.obra_id, linea.pieza_id, -linea.cantidad)
+                    movimiento._apply_obra_stock(
+                        movimiento.obra_destino_id, linea.pieza_id, linea.cantidad
                     )
 
                 move = self.env["stock.move"].create(
@@ -127,6 +158,9 @@ class AndamioMovimiento(models.Model):
                             % (linea.pieza_id.display_name, move.state)
                         )
                 move._action_done()
+
+                if movimiento.tipo_movimiento == "salida":
+                    movimiento._apply_obra_stock(movimiento.obra_id, linea.pieza_id, linea.cantidad)
 
             movimiento.estado = nuevo_estado
 

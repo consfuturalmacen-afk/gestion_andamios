@@ -14,6 +14,7 @@ Módulo para gestionar piezas de andamios, obras y movimientos de entrega/devolu
         "security/ir.model.access.csv",
         "data/andamio_sequence.xml",
         "views/andamio_obra_views.xml",
+        "views/andamio_obra_stock_views.xml",
         "views/andamio_pieza_views.xml",
         "views/andamio_movimiento_views.xml",
     ],

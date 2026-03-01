@@ -15,6 +15,16 @@ class TestMovimientosStock(TransactionCase):
         self.obra = self.env["andamio.obra"].create(
             {"name": "Obra Test", "ubicacion_id": self.ubicacion_obra.id}
         )
+        self.ubicacion_obra_2 = self.env["stock.location"].create(
+            {
+                "name": "Obra Test 2",
+                "usage": "internal",
+                "location_id": self.stock_location.id,
+            }
+        )
+        self.obra_2 = self.env["andamio.obra"].create(
+            {"name": "Obra Test 2", "ubicacion_id": self.ubicacion_obra_2.id}
+        )
         self.product = self.env["product.product"].create(
             {"name": "Producto Andamio Test", "type": "product"}
         )
@@ -24,6 +34,11 @@ class TestMovimientosStock(TransactionCase):
                 "codigo": "PZ-TEST-001",
                 "product_id": self.product.id,
             }
+        )
+        self.env["stock.quant"]._update_available_quantity(
+            self.product,
+            self.stock_location,
+            10,
         )
 
     def _crear_movimiento(self, tipo, cantidad):
@@ -70,3 +85,50 @@ class TestMovimientosStock(TransactionCase):
                     "lineas_ids": [(0, 0, {"pieza_id": self.pieza.id, "cantidad": 1})],
                 }
             )
+
+    def test_salida_actualiza_stock_por_obra(self):
+        mov = self._crear_movimiento("salida", 2)
+        mov.action_confirmar()
+        stock_obra = self.env["andamio.obra.stock"].search(
+            [("obra_id", "=", self.obra.id), ("pieza_id", "=", self.pieza.id)],
+            limit=1,
+        )
+        self.assertEqual(stock_obra.cantidad, 2)
+
+    def test_devolucion_descuenta_stock_por_obra(self):
+        salida = self._crear_movimiento("salida", 3)
+        salida.action_confirmar()
+
+        devolucion = self._crear_movimiento("devolucion", 2)
+        devolucion.action_confirmar()
+
+        stock_obra = self.env["andamio.obra.stock"].search(
+            [("obra_id", "=", self.obra.id), ("pieza_id", "=", self.pieza.id)],
+            limit=1,
+        )
+        self.assertEqual(stock_obra.cantidad, 1)
+
+    def test_traslado_mueve_stock_entre_obras(self):
+        salida = self._crear_movimiento("salida", 4)
+        salida.action_confirmar()
+
+        traslado = self.env["andamio.movimiento"].create(
+            {
+                "obra_id": self.obra.id,
+                "obra_destino_id": self.obra_2.id,
+                "tipo_movimiento": "traslado",
+                "lineas_ids": [(0, 0, {"pieza_id": self.pieza.id, "cantidad": 2})],
+            }
+        )
+        traslado.action_confirmar()
+
+        stock_origen = self.env["andamio.obra.stock"].search(
+            [("obra_id", "=", self.obra.id), ("pieza_id", "=", self.pieza.id)],
+            limit=1,
+        )
+        stock_destino = self.env["andamio.obra.stock"].search(
+            [("obra_id", "=", self.obra_2.id), ("pieza_id", "=", self.pieza.id)],
+            limit=1,
+        )
+        self.assertEqual(stock_origen.cantidad, 2)
+        self.assertEqual(stock_destino.cantidad, 2)
