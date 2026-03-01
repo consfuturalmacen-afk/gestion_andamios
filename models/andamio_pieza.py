@@ -11,7 +11,7 @@ class AndamioPieza(models.Model):
         "product.product",
         string="Producto de Inventario",
         required=True,
-        domain=[("detailed_type", "=", "product")],
+        domain=[("type", "=", "product")],
     )
     image_1920 = fields.Image(string="Imagen")
     stock_total = fields.Float(
