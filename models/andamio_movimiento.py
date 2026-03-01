@@ -65,7 +65,6 @@ class AndamioMovimiento(models.Model):
 
                 move = self.env["stock.move"].create(
                     {
-                        "name": f"MOV-AND/{movimiento.id or 0} - {linea.pieza_id.name}",
                         "product_id": linea.pieza_id.product_id.id,
                         "product_uom_qty": linea.cantidad,
                         "product_uom": linea.pieza_id.product_id.uom_id.id,
