@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_andamio_obra_stock_list" model="ir.ui.view">
+        <field name="name">andamio.obra.stock.list</field>
+        <field name="model">andamio.obra.stock</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="obra_id"/>
+                <field name="pieza_id"/>
+                <field name="cantidad"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_andamio_obra_stock_pivot" model="ir.ui.view">
+        <field name="name">andamio.obra.stock.pivot</field>
+        <field name="model">andamio.obra.stock</field>
+        <field name="arch" type="xml">
+            <pivot>
+                <field name="obra_id" type="row"/>
+                <field name="pieza_id" type="col"/>
+                <field name="cantidad" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_andamio_obra_stock_search" model="ir.ui.view">
+        <field name="name">andamio.obra.stock.search</field>
+        <field name="model">andamio.obra.stock</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="obra_id"/>
+                <field name="pieza_id"/>
+                <group expand="0" string="Agrupar por">
+                    <filter name="group_obra" string="Obra" context="{'group_by': 'obra_id'}"/>
+                    <filter name="group_pieza" string="Pieza" context="{'group_by': 'pieza_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_andamio_stock_por_obra" model="ir.actions.act_window">
+        <field name="name">Stock por Obra</field>
+        <field name="res_model">andamio.obra.stock</field>
+        <field name="view_mode">pivot,list</field>
+        <field name="search_view_id" ref="view_andamio_obra_stock_search"/>
+    </record>
+
+    <menuitem id="menu_andamio_stock_por_obra" name="Stock por Obra" parent="menu_andamio_root" action="action_andamio_stock_por_obra" sequence="5"/>
+</odoo>
