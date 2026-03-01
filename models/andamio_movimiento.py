@@ -24,12 +24,13 @@ class AndamioMovimiento(models.Model):
     stock_move_ids = fields.One2many("stock.move", "andamio_movimiento_id", string="Movimientos Stock")
 
 
-    def _get_available_qty(self, product, location):
+    def _get_location_qty(self, product, location, use_available=True):
         quants = self.env["stock.quant"].search([
             ("product_id", "=", product.id),
             ("location_id", "child_of", location.id),
         ])
-        return sum(quants.mapped("available_quantity"))
+        field_name = "available_quantity" if use_available else "quantity"
+        return sum(quants.mapped(field_name))
 
     def write(self, vals):
         if "tipo_movimiento" in vals:
@@ -71,7 +72,12 @@ class AndamioMovimiento(models.Model):
                         % linea.pieza_id.display_name
                     )
 
-                disponible = movimiento._get_available_qty(linea.pieza_id.product_id, location_id)
+                use_available = movimiento.tipo_movimiento == "salida"
+                disponible = movimiento._get_location_qty(
+                    linea.pieza_id.product_id,
+                    location_id,
+                    use_available=use_available,
+                )
                 if disponible < linea.cantidad:
                     raise UserError(
                         _(
