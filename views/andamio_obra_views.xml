@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <menuitem id="menu_andamio_root" name="Gestión Andamios"/>
     <record id="view_andamio_obra_tree" model="ir.ui.view">
         <field name="name">andamio.obra.tree</field>
         <field name="model">andamio.obra</field>
