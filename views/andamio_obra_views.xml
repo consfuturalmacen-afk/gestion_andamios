@@ -9,7 +9,6 @@
                 <field name="name"/>
                 <field name="ubicacion"/>
                 <field name="encargado_id"/>
-                <field name="cliente"/>
                 <field name="total_andamios_obra"/>
                 <field name="piezas_en_obra"/>
             </list>
@@ -26,21 +25,30 @@
                         <field name="name" readonly="1"/>
                         <field name="ubicacion_id" options="{'no_create_edit': True}"/>
                         <field name="encargado_id" options="{'no_create_edit': True}"/>
-                        <field name="cliente" readonly="1"/>
                         <field name="total_andamios_obra" readonly="1"/>
                         <field name="piezas_en_obra" readonly="1"/>
                     </group>
                     <notebook>
+                        <page string="Stock por Pieza">
+                            <field name="stock_por_pieza_ids" readonly="1">
+                                <list>
+                                    <field name="pieza_id"/>
+                                    <field name="cantidad"/>
+                                    <field name="stock_wh"/>
+                                </list>
+                            </field>
+                        </page>
                         <page string="Movimientos">
                             <field name="movimiento_ids" readonly="1">
                                 <list>
                                     <field name="fecha_entrega"/>
                                     <field name="tipo_movimiento"/>
+                                    <field name="obra_destino_id"/>
                                     <field name="estado"/>
                                 </list>
                             </field>
                         </page>
-                        <page string="Stock">
+                        <page string="Stock (quants)">
                             <field name="stock_move_ids" readonly="1">
                                 <list>
                                     <field name="product_id"/>
@@ -65,7 +73,6 @@
                 <field name="name"/>
                 <field name="ubicacion"/>
                 <field name="encargado_id"/>
-                <field name="cliente"/>
                 <field name="total_andamios_obra"/>
                 <field name="piezas_en_obra"/>
                 <templates>
@@ -73,7 +80,6 @@
                         <div class="oe_kanban_global_click">
                             <strong><field name="name"/></strong>
                             <div><span>Ubicación: </span><field name="ubicacion"/></div>
-                            <div><span>Cliente: </span><field name="cliente"/></div>
                             <div><span>Encargado: </span><field name="encargado_id"/></div>
                             <div><span>Total: </span><field name="total_andamios_obra"/></div>
                             <div><span>Piezas: </span><field name="piezas_en_obra"/></div>

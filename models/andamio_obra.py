@@ -23,8 +23,7 @@ class AndamioObra(models.Model):
         store=True,
         readonly=True,
     )
-    encargado_id = fields.Many2one("res.partner", string="Cliente / Encargado")
-    cliente = fields.Char(string="Cliente", related="encargado_id.name", store=True, readonly=True)
+    encargado_id = fields.Many2one("res.partner", string="Encargado")
     movimiento_ids = fields.One2many("andamio.movimiento", "obra_id", string="Movimientos")
     stock_por_pieza_ids = fields.One2many("andamio.obra.stock", "obra_id", string="Stock por Pieza")
     stock_move_ids = fields.Many2many(

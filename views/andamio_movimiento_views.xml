@@ -5,9 +5,9 @@
         <field name="model">andamio.movimiento</field>
         <field name="arch" type="xml">
             <list>
-                <field name="obra_id"/>
                 <field name="fecha_entrega"/>
                 <field name="tipo_movimiento"/>
+                <field name="obra_id"/>
                 <field name="obra_destino_id"/>
                 <field name="estado"/>
             </list>
@@ -32,6 +32,7 @@
                 <filter string="Traslados" name="f_traslados" domain="[('tipo_movimiento', '=', 'traslado')]"/>
                 <group expand="0" string="Agrupar por">
                     <filter string="Obra" name="group_obra" context="{'group_by': 'obra_id'}"/>
+                    <filter string="Obra Destino" name="group_obra_dest" context="{'group_by': 'obra_destino_id'}"/>
                     <filter string="Estado" name="group_estado" context="{'group_by': 'estado'}"/>
                     <filter string="Tipo" name="group_tipo" context="{'group_by': 'tipo_movimiento'}"/>
                 </group>
@@ -62,14 +63,20 @@
                                 <list editable="bottom">
                                     <field name="pieza_id"/>
                                     <field name="cantidad"/>
+                                    <field name="stock_origen_antes" readonly="1"/>
+                                    <field name="stock_origen_despues" readonly="1"/>
+                                    <field name="stock_destino_antes" readonly="1"/>
+                                    <field name="stock_destino_despues" readonly="1"/>
                                 </list>
                             </field>
                         </page>
-                        <page string="Stock">
+                        <page string="Movimientos de stock">
                             <field name="stock_move_ids" readonly="1">
                                 <list>
-                                                        <field name="product_id"/>
+                                    <field name="product_id"/>
                                     <field name="product_uom_qty"/>
+                                    <field name="location_id"/>
+                                    <field name="location_dest_id"/>
                                     <field name="state"/>
                                 </list>
                             </field>
@@ -86,8 +93,40 @@
         <field name="arch" type="xml">
             <pivot>
                 <field name="obra_id" type="row"/>
+                <field name="obra_destino_id" type="row"/>
                 <field name="tipo_movimiento" type="col"/>
             </pivot>
+        </field>
+    </record>
+
+    <record id="view_andamio_movimiento_linea_list" model="ir.ui.view">
+        <field name="name">andamio.movimiento.linea.list</field>
+        <field name="model">andamio.movimiento.linea</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="movimiento_id"/>
+                <field name="pieza_id"/>
+                <field name="cantidad"/>
+                <field name="stock_origen_antes"/>
+                <field name="stock_origen_despues"/>
+                <field name="stock_destino_antes"/>
+                <field name="stock_destino_despues"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_andamio_movimiento_linea_search" model="ir.ui.view">
+        <field name="name">andamio.movimiento.linea.search</field>
+        <field name="model">andamio.movimiento.linea</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="movimiento_id"/>
+                <field name="pieza_id"/>
+                <group expand="0" string="Agrupar por">
+                    <filter name="group_mov" string="Movimiento" context="{'group_by': 'movimiento_id'}"/>
+                    <filter name="group_pieza" string="Pieza" context="{'group_by': 'pieza_id'}"/>
+                </group>
+            </search>
         </field>
     </record>
 
@@ -99,12 +138,20 @@
     </record>
 
     <record id="action_andamio_informe_movimientos_por_obra" model="ir.actions.act_window">
-        <field name="name">Informe Movimientos por Obra</field>
+        <field name="name">Informe Movimientos por Sitio</field>
         <field name="res_model">andamio.movimiento</field>
         <field name="view_mode">pivot,list</field>
         <field name="context">{'search_default_group_obra': 1}</field>
     </record>
 
+    <record id="action_andamio_informe_trazabilidad_stock" model="ir.actions.act_window">
+        <field name="name">Trazabilidad Stock (Antes/Después)</field>
+        <field name="res_model">andamio.movimiento.linea</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="view_andamio_movimiento_linea_search"/>
+    </record>
+
     <menuitem id="menu_andamio_movimientos" name="Movimientos" parent="menu_andamio_root" action="action_andamio_movimiento"/>
-    <menuitem id="menu_andamio_informe_movimientos" name="Informe Movimientos por Obra" parent="menu_andamio_root" action="action_andamio_informe_movimientos_por_obra" sequence="30"/>
+    <menuitem id="menu_andamio_informe_movimientos" name="Informe Movimientos por Sitio" parent="menu_andamio_root" action="action_andamio_informe_movimientos_por_obra" sequence="30"/>
+    <menuitem id="menu_andamio_informe_trazabilidad_stock" name="Trazabilidad Stock (Antes/Después)" parent="menu_andamio_root" action="action_andamio_informe_trazabilidad_stock" sequence="33"/>
 </odoo>

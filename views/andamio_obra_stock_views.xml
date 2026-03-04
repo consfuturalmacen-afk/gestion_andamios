@@ -8,6 +8,7 @@
                 <field name="obra_id"/>
                 <field name="pieza_id"/>
                 <field name="cantidad"/>
+                <field name="stock_wh"/>
             </list>
         </field>
     </record>
@@ -20,6 +21,7 @@
                 <field name="obra_id" type="row"/>
                 <field name="pieza_id" type="col"/>
                 <field name="cantidad" type="measure"/>
+                <field name="stock_wh" type="measure"/>
             </pivot>
         </field>
     </record>
