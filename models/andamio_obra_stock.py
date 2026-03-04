@@ -9,7 +9,13 @@ class AndamioObraStock(models.Model):
     obra_id = fields.Many2one("andamio.obra", string="Obra", required=True, ondelete="cascade")
     pieza_id = fields.Many2one("andamio.pieza", string="Pieza", required=True, ondelete="cascade")
     cantidad = fields.Float(string="Cantidad en Obra", default=0.0)
-    stock_wh = fields.Float(string="Stock en WH/Stock", related="pieza_id.stock_total", readonly=True)
+    stock_wh = fields.Float(
+        string="Stock en WH/Stock",
+        related="pieza_id.stock_total",
+        readonly=True,
+        store=True,
+        group_operator="max",
+    )
 
     _sql_constraints = [
         (
