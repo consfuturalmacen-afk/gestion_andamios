@@ -21,7 +21,7 @@
                 <sheet>
                     <group>
                         <field name="product_id" options="{'no_create_edit': True}"/>
-                        <field name="codigo" readonly="1"/>
+                        <field name="codigo"/>
                         <field name="name" readonly="1"/>
                         <field name="stock_total" readonly="1"/>
                         <field name="image_1920" widget="image" class="oe_avatar" options="{'size': [128, 128]}"/>

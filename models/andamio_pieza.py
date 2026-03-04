@@ -12,7 +12,7 @@ class AndamioPieza(models.Model):
         help="Seleccione cualquier producto existente en inventario.",
     )
     name = fields.Char(string="Nombre", related="product_id.display_name", store=True, readonly=True)
-    codigo = fields.Char(string="Código", related="product_id.default_code", store=True, readonly=True)
+    codigo = fields.Char(string="Código")
     image_1920 = fields.Image(string="Imagen")
     stock_total = fields.Float(
         string="Stock en WH/Stock",
@@ -27,6 +27,27 @@ class AndamioPieza(models.Model):
             "Ya existe una pieza vinculada a este producto de inventario.",
         ),
     ]
+
+
+    @api.onchange("product_id")
+    def _onchange_product_id_set_codigo(self):
+        for pieza in self:
+            if pieza.product_id and not pieza.codigo:
+                pieza.codigo = pieza.product_id.default_code or pieza.product_id.display_name
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get("codigo") and vals.get("product_id"):
+                product = self.env["product.product"].browse(vals["product_id"])
+                vals["codigo"] = product.default_code or product.display_name
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if vals.get("product_id") and "codigo" not in vals:
+            product = self.env["product.product"].browse(vals["product_id"])
+            vals["codigo"] = product.default_code or product.display_name
+        return super().write(vals)
 
     @api.depends("product_id")
     def _compute_stock_total(self):
