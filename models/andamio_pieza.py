@@ -9,7 +9,7 @@ class AndamioPieza(models.Model):
         "product.product",
         string="Producto de Inventario",
         required=True,
-        domain=[("type", "=", "product")],
+        help="Seleccione cualquier producto existente en inventario.",
     )
     name = fields.Char(string="Nombre", related="product_id.display_name", store=True, readonly=True)
     codigo = fields.Char(string="Código", related="product_id.default_code", store=True, readonly=True)
