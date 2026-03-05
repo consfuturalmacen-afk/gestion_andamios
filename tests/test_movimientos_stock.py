@@ -199,3 +199,25 @@ class TestMovimientosStock(TransactionCase):
             limit=1,
         )
         self.assertEqual(stock_obra.cantidad, 0)
+
+    def test_devolucion_con_stock_parcial_en_hija_no_fuerza_negativo_en_padre(self):
+        self.env["andamio.obra.stock"].create(
+            {"obra_id": self.obra.id, "pieza_id": self.pieza.id, "cantidad": 2}
+        )
+        sub = self.env["stock.location"].create(
+            {
+                "name": "Obra Test Parcial",
+                "usage": "internal",
+                "location_id": self.ubicacion_obra.id,
+            }
+        )
+        self.env["stock.quant"]._update_available_quantity(self.product, sub, 1)
+
+        devolucion = self._crear_movimiento("devolucion", 2)
+        devolucion.action_confirmar()
+
+        stock_obra = self.env["andamio.obra.stock"].search(
+            [("obra_id", "=", self.obra.id), ("pieza_id", "=", self.pieza.id)],
+            limit=1,
+        )
+        self.assertEqual(stock_obra.cantidad, 0)

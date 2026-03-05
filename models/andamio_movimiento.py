@@ -98,7 +98,12 @@ class AndamioMovimiento(models.Model):
         if remaining > 0:
             # Keep behavior resilient in desynchronized cases by topping up the
             # base location and using it as final source.
-            self._ensure_physical_stock(product, base_location, remaining)
+            self._ensure_physical_stock(
+                product,
+                base_location,
+                remaining,
+                include_children=False,
+            )
             chunks.append((base_location, remaining))
 
         return chunks
@@ -133,12 +138,12 @@ class AndamioMovimiento(models.Model):
             )
         registro.cantidad = nuevo
 
-    def _ensure_physical_stock(self, product, location, required_qty):
+    def _ensure_physical_stock(self, product, location, required_qty, include_children=True):
         physical_qty = self._get_location_qty(
             product,
             location,
             use_available=False,
-            include_children=True,
+            include_children=include_children,
         )
         if physical_qty >= required_qty:
             return
