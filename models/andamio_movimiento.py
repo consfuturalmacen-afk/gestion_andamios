@@ -272,6 +272,13 @@ class AndamioMovimiento(models.Model):
                     )
 
                 for source_location, move_qty in move_chunks:
+                    if movimiento.tipo_movimiento in ("devolucion", "traslado"):
+                        movimiento._ensure_physical_stock(
+                            linea.pieza_id.product_id,
+                            source_location,
+                            move_qty,
+                            include_children=False,
+                        )
                     move = self.env["stock.move"].create(
                         {
                             "product_id": linea.pieza_id.product_id.id,
@@ -284,11 +291,11 @@ class AndamioMovimiento(models.Model):
                         }
                     )
                     move._action_confirm()
-                    move.with_context(allow_negative_stock=True)._action_assign()
                     if movimiento.tipo_movimiento in ("devolucion", "traslado"):
                         movimiento._set_move_done_qty(move, move_qty)
-                        move.with_context(allow_negative_stock=True)._action_done()
+                        move._action_done()
                     else:
+                        move.with_context(allow_negative_stock=True)._action_assign()
                         if move.state != "assigned":
                             raise UserError(
                                 _("No se pudo reservar stock para %s. Estado actual: %s")
