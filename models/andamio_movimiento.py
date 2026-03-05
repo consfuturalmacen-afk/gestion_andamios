@@ -75,12 +75,7 @@ class AndamioMovimiento(models.Model):
         return base_location
 
     def _get_source_chunks(self, base_location, product, qty):
-        """Return source locations and quantities to avoid forcing negatives.
-
-        For returns/transfers we can have stock spread across child locations of
-        the obra. This method splits the requested quantity across the real
-        locations with positive quants.
-        """
+        """Split quantity by real positive quants under an obra location."""
         remaining = qty
         chunks = []
         quants = self.env["stock.quant"].search(
@@ -100,15 +95,10 @@ class AndamioMovimiento(models.Model):
                 remaining -= take
 
         if remaining > 0:
-            # Keep behavior resilient in desynchronized cases by topping up the
-            # base location and using it as final source.
-            self._ensure_physical_stock(
-                product,
-                base_location,
-                remaining,
-                include_children=False,
+            raise UserError(
+                _("Stock insuficiente para %s en %s. Disponible: %s, solicitado: %s")
+                % (product.display_name, base_location.display_name, qty - remaining, qty)
             )
-            chunks.append((base_location, remaining))
 
         return chunks
 
@@ -119,21 +109,6 @@ class AndamioMovimiento(models.Model):
                 raise ValidationError(_("Debe indicar una Obra Destino para traslados."))
             if mov.tipo_movimiento == "traslado" and mov.obra_destino_id == mov.obra_id:
                 raise ValidationError(_("La Obra Destino debe ser distinta a la Obra Origen."))
-
-    def _ensure_physical_stock(self, product, location, required_qty, include_children=True):
-        physical_qty = self._get_location_qty(
-            product,
-            location,
-            use_available=False,
-            include_children=include_children,
-        )
-        if physical_qty >= required_qty:
-            return
-        self.env["stock.quant"]._update_available_quantity(
-            product,
-            location,
-            required_qty - physical_qty,
-        )
 
     def _set_move_done_qty(self, move, qty):
         if hasattr(move, "_set_quantity_done"):
@@ -256,13 +231,6 @@ class AndamioMovimiento(models.Model):
                     )
 
                 for source_location, move_qty in move_chunks:
-                    if movimiento.tipo_movimiento in ("devolucion", "traslado"):
-                        movimiento._ensure_physical_stock(
-                            linea.pieza_id.product_id,
-                            source_location,
-                            move_qty,
-                            include_children=False,
-                        )
                     move = self.env["stock.move"].create(
                         {
                             "product_id": linea.pieza_id.product_id.id,
@@ -277,7 +245,7 @@ class AndamioMovimiento(models.Model):
                     move._action_confirm()
                     if movimiento.tipo_movimiento in ("devolucion", "traslado"):
                         movimiento._set_move_done_qty(move, move_qty)
-                        move._action_done()
+                        move.with_context(allow_negative_stock=True)._action_done()
                     else:
                         move.with_context(allow_negative_stock=True)._action_assign()
                         if move.state != "assigned":
@@ -298,6 +266,10 @@ class AndamioMovimiento(models.Model):
                     ),
                 )
 
+            obras_a_sync = movimiento.obra_id
+            if movimiento.obra_destino_id:
+                obras_a_sync |= movimiento.obra_destino_id
+            self.env["andamio.obra.stock"]._sync_from_quants(obras=obras_a_sync)
             movimiento.estado = nuevo_estado
 
     def action_borrador(self):
