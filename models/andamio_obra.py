@@ -51,6 +51,7 @@ class AndamioObra(models.Model):
 
     @api.depends("stock_por_pieza_ids.cantidad", "stock_por_pieza_ids.pieza_id")
     def _compute_resumen_obras(self):
+        self.env["andamio.obra.stock"]._sync_from_quants(obras=self)
         for obra in self:
             lineas = obra.stock_por_pieza_ids.filtered(lambda l: l.cantidad > 0)
             obra.total_andamios_obra = sum(lineas.mapped("cantidad"))

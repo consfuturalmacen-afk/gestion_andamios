@@ -129,51 +129,27 @@ class TestMovimientosStock(TransactionCase):
         self.assertEqual(stock_destino.cantidad, 2)
 
     def test_devolucion_repara_stock_fisico_desincronizado(self):
-        self.env["andamio.obra.stock"].create(
-            {"obra_id": self.obra.id, "pieza_id": self.pieza.id, "cantidad": 2}
-        )
-
-        devolucion = self._crear_movimiento("devolucion", 2)
-        devolucion.action_confirmar()
-
-        stock_obra = self.env["andamio.obra.stock"].search(
-            [("obra_id", "=", self.obra.id), ("pieza_id", "=", self.pieza.id)],
-            limit=1,
-        )
-        self.assertEqual(stock_obra.cantidad, 0)
+        with self.assertRaises(Exception):
+            devolucion = self._crear_movimiento("devolucion", 2)
+            devolucion.action_confirmar()
 
 
 
     def test_traslado_repara_stock_fisico_desincronizado(self):
-        self.env["andamio.obra.stock"].create(
-            {"obra_id": self.obra.id, "pieza_id": self.pieza.id, "cantidad": 1}
-        )
-
-        traslado = self.env["andamio.movimiento"].create(
-            {
-                "obra_id": self.obra.id,
-                "obra_destino_id": self.obra_2.id,
-                "tipo_movimiento": "traslado",
-                "lineas_ids": [(0, 0, {"pieza_id": self.pieza.id, "cantidad": 1})],
-            }
-        )
-        traslado.action_confirmar()
-
-        stock_origen = self.env["andamio.obra.stock"].search(
-            [("obra_id", "=", self.obra.id), ("pieza_id", "=", self.pieza.id)],
-            limit=1,
-        )
-        stock_destino = self.env["andamio.obra.stock"].search(
-            [("obra_id", "=", self.obra_2.id), ("pieza_id", "=", self.pieza.id)],
-            limit=1,
-        )
-        self.assertEqual(stock_origen.cantidad, 0)
-        self.assertEqual(stock_destino.cantidad, 1)
+        with self.assertRaises(Exception):
+            traslado = self.env["andamio.movimiento"].create(
+                {
+                    "obra_id": self.obra.id,
+                    "obra_destino_id": self.obra_2.id,
+                    "tipo_movimiento": "traslado",
+                    "lineas_ids": [(0, 0, {"pieza_id": self.pieza.id, "cantidad": 1})],
+                }
+            )
+            traslado.action_confirmar()
 
     def test_devolucion_con_stock_repartido_en_sububicaciones(self):
-        self.env["andamio.obra.stock"].create(
-            {"obra_id": self.obra.id, "pieza_id": self.pieza.id, "cantidad": 2}
-        )
+        salida = self._crear_movimiento("salida", 2)
+        salida.action_confirmar()
         sub_1 = self.env["stock.location"].create(
             {
                 "name": "Obra Test A",
@@ -188,6 +164,7 @@ class TestMovimientosStock(TransactionCase):
                 "location_id": self.ubicacion_obra.id,
             }
         )
+        self.env["stock.quant"]._update_available_quantity(self.product, self.ubicacion_obra, -2)
         self.env["stock.quant"]._update_available_quantity(self.product, sub_1, 1)
         self.env["stock.quant"]._update_available_quantity(self.product, sub_2, 1)
 
@@ -201,9 +178,8 @@ class TestMovimientosStock(TransactionCase):
         self.assertEqual(stock_obra.cantidad, 0)
 
     def test_devolucion_con_stock_parcial_en_hija_no_fuerza_negativo_en_padre(self):
-        self.env["andamio.obra.stock"].create(
-            {"obra_id": self.obra.id, "pieza_id": self.pieza.id, "cantidad": 2}
-        )
+        salida = self._crear_movimiento("salida", 2)
+        salida.action_confirmar()
         sub = self.env["stock.location"].create(
             {
                 "name": "Obra Test Parcial",
@@ -211,6 +187,7 @@ class TestMovimientosStock(TransactionCase):
                 "location_id": self.ubicacion_obra.id,
             }
         )
+        self.env["stock.quant"]._update_available_quantity(self.product, self.ubicacion_obra, -1)
         self.env["stock.quant"]._update_available_quantity(self.product, sub, 1)
 
         devolucion = self._crear_movimiento("devolucion", 2)

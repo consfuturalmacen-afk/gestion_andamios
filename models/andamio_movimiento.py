@@ -41,13 +41,17 @@ class AndamioMovimiento(models.Model):
         return sum(quants.mapped(field_name))
 
     def _get_stock_sitio(self, pieza, obra=None):
-        if obra:
-            registro = self.env["andamio.obra.stock"].search(
-                [("obra_id", "=", obra.id), ("pieza_id", "=", pieza.id)], limit=1
+        if not pieza.product_id:
+            return 0.0
+        if obra and obra.ubicacion_id:
+            return self._get_location_qty(
+                pieza.product_id,
+                obra.ubicacion_id,
+                use_available=False,
+                include_children=True,
             )
-            return registro.cantidad if registro else 0.0
         stock_location = self.env.ref("stock.stock_location_stock", raise_if_not_found=False)
-        if not stock_location or not pieza.product_id:
+        if not stock_location:
             return 0.0
         return self._get_location_qty(
             pieza.product_id,
@@ -115,28 +119,6 @@ class AndamioMovimiento(models.Model):
                 raise ValidationError(_("Debe indicar una Obra Destino para traslados."))
             if mov.tipo_movimiento == "traslado" and mov.obra_destino_id == mov.obra_id:
                 raise ValidationError(_("La Obra Destino debe ser distinta a la Obra Origen."))
-
-    def _apply_obra_stock(self, obra, pieza, delta):
-        stock_model = self.env["andamio.obra.stock"]
-        registro = stock_model.search(
-            [("obra_id", "=", obra.id), ("pieza_id", "=", pieza.id)], limit=1
-        )
-        if not registro:
-            if delta < 0:
-                raise UserError(
-                    _("No hay stock registrado de %s en la obra %s.")
-                    % (pieza.display_name, obra.display_name)
-                )
-            registro = stock_model.create(
-                {"obra_id": obra.id, "pieza_id": pieza.id, "cantidad": 0.0}
-            )
-        nuevo = registro.cantidad + delta
-        if nuevo < 0:
-            raise UserError(
-                _("Stock insuficiente para %s en %s. Disponible: %s, solicitado: %s")
-                % (pieza.display_name, obra.display_name, registro.cantidad, abs(delta))
-            )
-        registro.cantidad = nuevo
 
     def _ensure_physical_stock(self, product, location, required_qty, include_children=True):
         physical_qty = self._get_location_qty(
@@ -247,21 +229,23 @@ class AndamioMovimiento(models.Model):
                                 linea.cantidad,
                             )
                         )
-                elif movimiento.tipo_movimiento == "devolucion":
-                    movimiento._apply_obra_stock(movimiento.obra_id, linea.pieza_id, -linea.cantidad)
-                    movimiento._ensure_physical_stock(
+                elif movimiento.tipo_movimiento in ("devolucion", "traslado"):
+                    disponible_origen = movimiento._get_location_qty(
                         linea.pieza_id.product_id,
                         default_source_location,
-                        linea.cantidad,
+                        use_available=False,
+                        include_children=True,
                     )
-                else:
-                    movimiento._apply_obra_stock(movimiento.obra_id, linea.pieza_id, -linea.cantidad)
-                    movimiento._apply_obra_stock(movimiento.obra_destino_id, linea.pieza_id, linea.cantidad)
-                    movimiento._ensure_physical_stock(
-                        linea.pieza_id.product_id,
-                        default_source_location,
-                        linea.cantidad,
-                    )
+                    if disponible_origen < linea.cantidad:
+                        raise UserError(
+                            _("Stock insuficiente para %s en %s. Disponible: %s, solicitado: %s")
+                            % (
+                                linea.pieza_id.display_name,
+                                default_source_location.display_name,
+                                disponible_origen,
+                                linea.cantidad,
+                            )
+                        )
 
                 move_chunks = [(default_source_location, linea.cantidad)]
                 if movimiento.tipo_movimiento in ("devolucion", "traslado"):
@@ -302,7 +286,6 @@ class AndamioMovimiento(models.Model):
                                 % (linea.pieza_id.display_name, move.state)
                             )
                         move._action_done()
-                        movimiento._apply_obra_stock(movimiento.obra_id, linea.pieza_id, linea.cantidad)
 
                 linea.stock_origen_despues = self._get_stock_sitio(
                     linea.pieza_id,
@@ -353,3 +336,18 @@ class StockMove(models.Model):
     _inherit = "stock.move"
 
     andamio_movimiento_id = fields.Many2one("andamio.movimiento", string="Movimiento Andamio", index=True)
+
+    def _action_done(self, cancel_backorder=False):
+        moves = super()._action_done(cancel_backorder=cancel_backorder)
+        location_ids = (moves.mapped("location_id") | moves.mapped("location_dest_id")).ids
+        if location_ids:
+            obras = self.env["andamio.obra"].search(
+                [
+                    "|",
+                    ("ubicacion_id", "in", location_ids),
+                    ("ubicacion_id", "parent_of", location_ids),
+                ]
+            )
+            if obras:
+                self.env["andamio.obra.stock"]._sync_from_quants(obras=obras)
+        return moves
