@@ -70,6 +70,39 @@ class AndamioMovimiento(models.Model):
             return quant.location_id
         return base_location
 
+    def _get_source_chunks(self, base_location, product, qty):
+        """Return source locations and quantities to avoid forcing negatives.
+
+        For returns/transfers we can have stock spread across child locations of
+        the obra. This method splits the requested quantity across the real
+        locations with positive quants.
+        """
+        remaining = qty
+        chunks = []
+        quants = self.env["stock.quant"].search(
+            [
+                ("product_id", "=", product.id),
+                ("location_id", "child_of", base_location.id),
+                ("quantity", ">", 0),
+            ],
+            order="quantity desc",
+        )
+        for quant in quants:
+            if remaining <= 0:
+                break
+            take = min(quant.quantity, remaining)
+            if take > 0:
+                chunks.append((quant.location_id, take))
+                remaining -= take
+
+        if remaining > 0:
+            # Keep behavior resilient in desynchronized cases by topping up the
+            # base location and using it as final source.
+            self._ensure_physical_stock(product, base_location, remaining)
+            chunks.append((base_location, remaining))
+
+        return chunks
+
     @api.constrains("tipo_movimiento", "obra_destino_id", "obra_id")
     def _check_obra_destino_traslado(self):
         for mov in self:
@@ -225,36 +258,39 @@ class AndamioMovimiento(models.Model):
                         linea.cantidad,
                     )
 
-                source_location = (
-                    movimiento._find_source_location(default_source_location, linea.pieza_id.product_id, linea.cantidad)
-                    if movimiento.tipo_movimiento in ("devolucion", "traslado")
-                    else default_source_location
-                )
-
-                move = self.env["stock.move"].create(
-                    {
-                        "product_id": linea.pieza_id.product_id.id,
-                        "product_uom_qty": linea.cantidad,
-                        "product_uom": linea.pieza_id.product_id.uom_id.id,
-                        "location_id": source_location.id,
-                        "location_dest_id": location_dest_id.id,
-                        "state": "draft",
-                        "andamio_movimiento_id": movimiento.id,
-                    }
-                )
-                move._action_confirm()
-                move.with_context(allow_negative_stock=True)._action_assign()
+                move_chunks = [(default_source_location, linea.cantidad)]
                 if movimiento.tipo_movimiento in ("devolucion", "traslado"):
-                    movimiento._set_move_done_qty(move, linea.cantidad)
-                    move.with_context(allow_negative_stock=True)._action_done()
-                else:
-                    if move.state != "assigned":
-                        raise UserError(
-                            _("No se pudo reservar stock para %s. Estado actual: %s")
-                            % (linea.pieza_id.display_name, move.state)
-                        )
-                    move._action_done()
-                    movimiento._apply_obra_stock(movimiento.obra_id, linea.pieza_id, linea.cantidad)
+                    move_chunks = movimiento._get_source_chunks(
+                        default_source_location,
+                        linea.pieza_id.product_id,
+                        linea.cantidad,
+                    )
+
+                for source_location, move_qty in move_chunks:
+                    move = self.env["stock.move"].create(
+                        {
+                            "product_id": linea.pieza_id.product_id.id,
+                            "product_uom_qty": move_qty,
+                            "product_uom": linea.pieza_id.product_id.uom_id.id,
+                            "location_id": source_location.id,
+                            "location_dest_id": location_dest_id.id,
+                            "state": "draft",
+                            "andamio_movimiento_id": movimiento.id,
+                        }
+                    )
+                    move._action_confirm()
+                    move.with_context(allow_negative_stock=True)._action_assign()
+                    if movimiento.tipo_movimiento in ("devolucion", "traslado"):
+                        movimiento._set_move_done_qty(move, move_qty)
+                        move.with_context(allow_negative_stock=True)._action_done()
+                    else:
+                        if move.state != "assigned":
+                            raise UserError(
+                                _("No se pudo reservar stock para %s. Estado actual: %s")
+                                % (linea.pieza_id.display_name, move.state)
+                            )
+                        move._action_done()
+                        movimiento._apply_obra_stock(movimiento.obra_id, linea.pieza_id, linea.cantidad)
 
                 linea.stock_origen_despues = self._get_stock_sitio(
                     linea.pieza_id,

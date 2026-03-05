@@ -169,3 +169,33 @@ class TestMovimientosStock(TransactionCase):
         )
         self.assertEqual(stock_origen.cantidad, 0)
         self.assertEqual(stock_destino.cantidad, 1)
+
+    def test_devolucion_con_stock_repartido_en_sububicaciones(self):
+        self.env["andamio.obra.stock"].create(
+            {"obra_id": self.obra.id, "pieza_id": self.pieza.id, "cantidad": 2}
+        )
+        sub_1 = self.env["stock.location"].create(
+            {
+                "name": "Obra Test A",
+                "usage": "internal",
+                "location_id": self.ubicacion_obra.id,
+            }
+        )
+        sub_2 = self.env["stock.location"].create(
+            {
+                "name": "Obra Test B",
+                "usage": "internal",
+                "location_id": self.ubicacion_obra.id,
+            }
+        )
+        self.env["stock.quant"]._update_available_quantity(self.product, sub_1, 1)
+        self.env["stock.quant"]._update_available_quantity(self.product, sub_2, 1)
+
+        devolucion = self._crear_movimiento("devolucion", 2)
+        devolucion.action_confirmar()
+
+        stock_obra = self.env["andamio.obra.stock"].search(
+            [("obra_id", "=", self.obra.id), ("pieza_id", "=", self.pieza.id)],
+            limit=1,
+        )
+        self.assertEqual(stock_obra.cantidad, 0)
